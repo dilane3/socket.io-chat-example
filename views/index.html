@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        body {
+            width: 100;
+            height: 100vh;
+            margin: 0;
+            background-color: #3e4bff;
+            font-family: ubuntu, Arial, Helvetica, sans-serif;
+            font-weight: 900;
+        }
+
+        #messages {
+            width: 500px;
+            height: calc(100vh - 200px);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #f4f4f4;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .4);
+        }
+
+        .section-message {
+            width: 100%;
+            height: calc(100% - 60px);
+            overflow-y: scroll;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+        }
+        
+        .message {
+            width: all;
+            height: auto;
+            padding: 5px;
+            display: flex;
+            /* flex-direction: column; */
+        }
+
+        .message-item {
+            display: flex;
+            position: relative;
+            max-width: 300px;
+            min-width: 60px;
+            min-height: 20px;
+            height: auto;
+            width: auto;
+            background-color: #3b84f1;
+            color:#fff;
+            margin-left: 30px;
+            padding: 10px;
+            border-radius: 10px 10px 10px 0;
+            z-index: 5;
+            font-size: 13px;
+        }
+
+        .message-item.sended {
+            border-radius: 10px 10px 0 10px;
+            background-color: #fff;
+            color:rgba(0, 0, 0, .8);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+            margin-left: auto;
+            margin-right: 30px;
+        }
+
+        .message-item::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: -15px;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 0px solid transparent;
+            border-bottom: 10px solid #3b84f1;
+        }
+
+        .message-item.sended::after {
+            bottom: 0;
+            left: inherit;
+            right: -13px;
+            border-left: 0px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 10px solid #fff;
+            filter: drop-shadow(2px 1px 1px rgba(0, 0, 0, .4));
+        }
+
+        .editor {
+            width: calc(100% - 40px);
+            height: calc(60px - 40px);
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .editor .btn-send {
+            width: 80px;
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 5px;
+            border: 0;
+            color: #fff;
+            background-color: #3e4bff;
+        }
+
+        .editor input {
+            width: calc(100% - 110px);
+            height: 30px;
+            padding: 2px 10px;
+            border-radius: 5px;
+            border: 1px solid #aaa;
+        }
+
+        .editor input:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <section id="messages">
+        <div class="section-message">
+        </div>
+
+        <div class="editor">
+            <input type="text" placeholder="Type a message">
+            <button class="btn-send">Send</button>
+        </div>
+    </section>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        // selection of elements
+        const messages = document.querySelector(".section-message")
+        const textField = document.querySelector("input")
+        const sendBtn = document.querySelector(".btn-send")
+
+        const displayMessage = (message, status) => {
+          const nodeMessage = document.createElement("article")
+          const nodeMessageInner = document.createElement("div")
+
+          nodeMessage.classList.add("message")
+          nodeMessageInner.classList.add("message-item")
+
+          if (status === "sended")
+            nodeMessageInner.classList.add("sended")
+
+          nodeMessageInner.innerText = message
+
+          nodeMessage.appendChild(nodeMessageInner)
+
+          messages.appendChild(nodeMessage)
+
+          messages.scrollTo({
+                top: messages.scrollHeight,
+                left: 0,
+                behavior: 'smooth'
+              })
+        }
+
+        sendBtn.onclick = function(event) {
+            event.preventDefault()
+
+            const message = textField.value
+
+            if (message && message.length > 0) {
+              displayMessage(message, "sended")
+
+              socket.emit("chat message", message)
+
+              textField.value = ""
+            }
+        }
+
+        socket.on("message", (message) => {
+          displayMessage(message, "received")
+        })
+    </script>
+</body>
+</html>
