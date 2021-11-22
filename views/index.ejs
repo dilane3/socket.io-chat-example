@@ -53,17 +53,18 @@
             height: auto;
             padding: 5px;
             display: flex;
-            /* flex-direction: column; */
+            flex-direction: column;
+            margin-bottom: 5px;
         }
 
         .message-item {
             display: flex;
             position: relative;
-            max-width: 300px;
-            min-width: 60px;
+            /* max-width: 300px; */
+            min-width: 70px;
             min-height: 20px;
             height: auto;
-            width: auto;
+            width: fit-content;
             background-color: #3b84f1;
             color:#fff;
             margin-left: 30px;
@@ -71,6 +72,30 @@
             border-radius: 10px 10px 10px 0;
             z-index: 5;
             font-size: 13px;
+        }
+
+        .message-info {
+            display: flex;
+            justify-content: flex-start;
+            align-items: baseline;
+            width: auto;
+            margin-top: 5px;
+            margin-left: 30px;
+        }
+
+        .message-info.sended {
+            margin-left: auto;
+            margin-right: 30px;
+        }
+
+        .message-info span:first-child {
+            font-size: 14px;
+        }
+
+        .message-info span:last-child {
+            font-size: 11px;
+            color:rgba(27, 26, 26, 0.4);
+            margin-left: 10px;
         }
 
         .message-item.sended {
@@ -141,8 +166,7 @@
         @media screen and (max-width: 500px) {
             #messages {
                 width: 100%;
-                min-height: calc(100vh - 50px);
-                height: auto;
+                height: 100vh;
                 position: relative;    
             }
         }
@@ -157,6 +181,7 @@
 </head>
 <body>
     <section id="messages">
+        <input type="hidden" value=<%= name %> id="name">
         <header>
             <%= name %>
         </header>
@@ -165,7 +190,7 @@
         </div>
 
         <div class="editor">
-            <input type="text" placeholder="Type a message">
+            <input type="text" class="message" placeholder="Type a message">
             <button class="btn-send">Send</button>
         </div>
     </section>
@@ -174,32 +199,56 @@
     <script>
         var socket = io();
 
+        console.log(document.getElementById("name").value)
         // selection of elements
         const messages = document.querySelector(".section-message")
-        const textField = document.querySelector("input")
+        const textField = document.querySelector(".message")
         const sendBtn = document.querySelector(".btn-send")
 
         const displayMessage = (message, status) => {
-          const nodeMessage = document.createElement("article")
-          const nodeMessageInner = document.createElement("div")
+            const nodeMessage = document.createElement("article")
+            const nodeMessageInner = document.createElement("div")
 
-          nodeMessage.classList.add("message")
-          nodeMessageInner.classList.add("message-item")
+            // message info
+            const messageInfo = document.createElement("div")
+            const messageAuthor = document.createElement("span")
+            const messageDate = document.createElement("span")
 
-          if (status === "sended")
-            nodeMessageInner.classList.add("sended")
+            const date = new Date()
 
-          nodeMessageInner.innerText = message
+            messageInfo.classList.add("message-info")
+            
+            messageAuthor.innerText = "Dilane3"
+            messageDate.innerText = date.getHours() + ':' + date.getMinutes()
 
-          nodeMessage.appendChild(nodeMessageInner)
+            // setting some classes
+            nodeMessage.classList.add("message")
+            nodeMessageInner.classList.add("message-item")
 
-          messages.appendChild(nodeMessage)
+            if (status === "sended") {
+                nodeMessageInner.classList.add("sended") // set the sended class
+                messageInfo.classList.add("sended")
+                messageAuthor.style.color = "#3e4bff"
+            }
 
-          messages.scrollTo({
+            nodeMessageInner.innerText = message
+
+            nodeMessage.appendChild(nodeMessageInner)
+
+            // adding info message
+            if (status === "received")
+                messageInfo.appendChild(messageAuthor)
+                
+            messageInfo.appendChild(messageDate)
+            nodeMessage.appendChild(messageInfo)
+
+            messages.appendChild(nodeMessage)
+
+            messages.scrollTo({
                 top: messages.scrollHeight,
                 left: 0,
                 behavior: 'smooth'
-              })
+            })
         }
 
         const sendMessage = (event) => {

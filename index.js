@@ -15,7 +15,12 @@ app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 
 app.get("/", (req, res) => {
-  res.render("index", {name: "dilane"})
+  const {name, room} = req.query
+
+  if (name && room)
+    res.render("index", {name, req})
+  else
+    res.redirect("/login")
 })
 
 app.get("/login", (req, res) => {
