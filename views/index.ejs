@@ -27,12 +27,25 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, .4);
         }
 
+        header {
+            height: 40px;
+            width: calc(100% - 20px);
+            background-color: #3e4bff;
+            color: #fff;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            padding-left: 20px;
+        }
+
         .section-message {
             width: 100%;
-            height: calc(100% - 60px);
+            height: calc(100% - 100px);
             overflow-y: scroll;
             overflow-x: hidden;
             scrollbar-width: thin;
+            scrollbar-color: green;
         }
         
         .message {
@@ -124,10 +137,30 @@
         .editor input:focus {
             outline: none;
         }
+
+        @media screen and (max-width: 500px) {
+            #messages {
+                width: 100%;
+                min-height: calc(100vh - 50px);
+                height: auto;
+                position: relative;    
+            }
+        }
+
+        @media screen and (max-height: 500px) {
+            #messages {
+                height: 100vh;
+                /* position: relative;     */
+            }
+        }
     </style>
 </head>
 <body>
     <section id="messages">
+        <header>
+            <%= name %>
+        </header>
+
         <div class="section-message">
         </div>
 
@@ -169,7 +202,7 @@
               })
         }
 
-        sendBtn.onclick = function(event) {
+        const sendMessage = (event) => {
             event.preventDefault()
 
             const message = textField.value
@@ -181,6 +214,12 @@
 
               textField.value = ""
             }
+        }
+
+        sendBtn.onclick = sendMessage
+        textField.onkeyup = (event) => {
+            if (event.key === "Enter")
+                sendMessage(event)
         }
 
         socket.on("message", (message) => {

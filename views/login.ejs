@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+
+  <style>
+    body {
+      width: 100;
+      height: 100vh;
+      margin: 0;
+      background-color: #3e4bff;
+      font-family: ubuntu, Arial, Helvetica, sans-serif;
+      font-weight: 900;
+      overflow: hidden;
+    }
+
+    #messages {
+      position: relative;
+      width: 300px;
+      height: auto;
+      min-height: 200px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #f4f4f4;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, .4);
+      padding-top: 20px;
+    }
+
+    h3 {
+      display: block;
+      text-align: center;
+      font-size: 24px;
+      color: #3b84f1;
+      margin: 0;
+    }
+
+    form {
+      width: calc(100% - 40px);
+      height: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    input {
+      width: calc(100% - 20px);
+      height: 20px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #aaa;
+    }
+
+    input:nth-child(1) {
+      margin-bottom: 10px;
+    }
+
+    button.btn-valid {
+      width: 100px;
+      height: 40px;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      color: #fff;
+      background-color: #3e4bff;
+      margin-top: 10px;
+      display: flex;
+      align-self: flex-end;
+      justify-content: center;
+      align-items: center;
+      font-size: 14px;
+      transition: transform .3s;
+    }
+
+    button.btn-valid:hover {
+      cursor: pointer;
+      transform: scale(1.04);
+    }
+
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: 100px;
+      border: 3px solid #3e4bff;
+      border-radius: 100%;
+      border-bottom-color: transparent;
+      animation: loading .7s linear infinite;
+    }
+
+    @keyframes loading {
+      from {
+        transform: translate(-50%, -50%) rotateZ(0deg);
+      }
+
+      to {
+        transform: translate(-50%, -50%) rotateZ(360deg);
+      }
+    }
+
+    @media screen and (max-width: 300px) {
+      #messages {
+        width: 100%;
+        height: 100vh;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center; 
+      }
+    }
+
+    @media screen and (max-height: 300px) {
+      #messages {
+        height: 100vh;
+        /* position: relative;     */
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <section id="messages">
+    <h3>Chat Login</h3>
+
+    <form>
+      <input type="text" class="name" placeholder="Your name">
+      <input type="text" class="room" placeholder="Name of the room">
+
+      <button class="btn-valid">Enter</button>
+      <span class="loader"></span>
+    </form>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.24.0/axios.min.js"></script>
+  <script>
+    const nameField = document.querySelector(".name")
+    const roomField = document.querySelector(".room")
+    const btnValid = document.querySelector(".btn-valid")
+    const loader = document.querySelector(".loader")
+
+    const instance = axios.create({
+      baseUrl: "http://localhost:5000/"
+    })
+
+    btnValid.addEventListener("click", (event) => {
+      event.preventDefault()
+
+      const name = nameField.value
+      const room = roomField.value
+
+      if (name && room) {
+        loader.classList.add("loading")
+        
+        let time = setTimeout(() => {
+          loader.classList.remove("loading")
+          nameField.value = ""
+          roomField.value = ""
+
+          window.location.href = `/?name=${name}&room=${room}`
+        }, 2000)
+      }
+    })
+  </script>
+</body>
+</html>

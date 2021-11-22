@@ -7,8 +7,19 @@ const io = new Server(server)
 
 const PORT = process.env.PORT || 5000
 
+const users = []
+
+app.set("view engine", "ejs")
+
+app.use(express.json())
+app.use(express.urlencoded({extended: true}))
+
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/views/index.html")
+  res.render("index", {name: "dilane"})
+})
+
+app.get("/login", (req, res) => {
+  res.render("login")
 })
 
 io.on("connection", (socket) => {
@@ -19,8 +30,9 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("message", message)
   })
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (reason) => {
     console.log("a user has left")
+    console.log(reason)
   })
 })
 
