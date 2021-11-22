@@ -83,4 +83,4 @@ io.on("connection", (socket) => {
 })
 
 
-server.listen(PORT, () => console.log("Server up on http://localhost:5000"))
+server.listen(PORT, () => console.log("Server up on https://chat-room-server-app.herokuapp.com/"))

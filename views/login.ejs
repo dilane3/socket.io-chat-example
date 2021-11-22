@@ -139,16 +139,11 @@
     </form>
   </section>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.24.0/axios.min.js"></script>
   <script>
     const nameField = document.querySelector(".name")
     const roomField = document.querySelector(".room")
     const btnValid = document.querySelector(".btn-valid")
     const loader = document.querySelector(".loader")
-
-    const instance = axios.create({
-      baseUrl: "http://localhost:5000/"
-    })
 
     btnValid.addEventListener("click", (event) => {
       event.preventDefault()
