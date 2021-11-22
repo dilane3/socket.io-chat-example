@@ -18,6 +18,13 @@ const colors = [
   "brown"
 ]
 
+const {
+  addUser,
+  removeUser,
+  getUser,
+  getUsersRoom
+} = require("./users/users.js")
+
 app.set("view engine", "ejs")
 
 app.use(express.json())
@@ -43,8 +50,16 @@ app.get("/login", (req, res) => {
 io.on("connection", (socket) => {
   console.log("new connexion detected")
  
-  socket.on("join", ({name, room}) => {
+  socket.on("join", ({name, room, color}, cb) => {
     socket.join(room)
+
+    // adding a user
+    addUser({id: socket.id, name, room, color})
+
+    // trigger an event
+    socket.broadcast.to(room).emit("online users", getUsersRoom(room))
+
+    cb(getUsersRoom(room))
   })
 
   socket.on("chat message", ({message, name, color, room}) => {
@@ -53,7 +68,17 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", (reason) => {
     console.log("a user has left")
-    console.log(reason)
+
+    const user = getUser(socket.id)
+    
+    // remove a user
+    removeUser(socket.id)
+
+    // console.log(user.user.getName)
+
+    if (user?.user) {
+      socket.broadcast.to(user.user?.getRoom).emit("online users", getUsersRoom(user.user?.getRoom))
+    }
   })
 })
 

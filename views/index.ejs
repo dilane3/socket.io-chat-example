@@ -34,9 +34,13 @@
             color: #fff;
             display: flex;
             flex-direction: row;
-            justify-content: flex-start;
+            justify-content: space-between;
             align-items: center;
             padding-left: 20px;
+        }
+
+        .online-users-number {
+            margin-right: 10px;
         }
 
         .section-message {
@@ -185,7 +189,11 @@
         <input type="hidden" value=<%= room %> id="room">
         <input type="hidden" value=<%= color %> id="color">
         <header>
-            <%= name %>
+            <span>
+                <%= name %>
+            </span>
+
+            <span class="online-users-number"></span>
         </header>
 
         <div class="section-message">
@@ -201,7 +209,8 @@
     <script>
         var socket = io();
 
-        console.log(document.getElementById("name").value)
+        const audio = new Audio("http://192.168.43.81:5000/sound/message.mp3")
+
         // selection of elements
         const messages = document.querySelector(".section-message")
         const textField = document.querySelector(".message")
@@ -211,8 +220,18 @@
         const room = document.getElementById("room")
         const color = document.getElementById("color")
 
+        // display number users online
+        const numberUsersOnline = (number) => {
+            if (number > 1) 
+                return `${number} Users online`
+            else
+                return `${number} User online`
+        }
+
         // join the room
-        socket.emit("join", {name: name.value, room: room.value})
+        socket.emit("join", {name: name.value, room: room.value, color: color.value}, (onlineUsers) => {
+            document.querySelector(".online-users-number").innerText = numberUsersOnline(onlineUsers)
+        })
 
         const displayMessage = ({message, name, color}, status) => {
             const nodeMessage = document.createElement("article")
@@ -286,10 +305,12 @@
         }
 
         socket.on("message", ({message, name, color}) => {
-            const audio = new Audio("http://192.168.43.81:5000/sound/message.mp3")
-
             audio.play()
             displayMessage({message, name, color}, "received")
+        })
+
+        socket.on("online users", (onlineUsers) => {
+            document.querySelector(".online-users-number").innerText = numberUsersOnline(onlineUsers)
         })
     </script>
 </body>
