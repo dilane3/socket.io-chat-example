@@ -182,6 +182,8 @@
 <body>
     <section id="messages">
         <input type="hidden" value=<%= name %> id="name">
+        <input type="hidden" value=<%= room %> id="room">
+        <input type="hidden" value=<%= color %> id="color">
         <header>
             <%= name %>
         </header>
@@ -205,7 +207,14 @@
         const textField = document.querySelector(".message")
         const sendBtn = document.querySelector(".btn-send")
 
-        const displayMessage = (message, status) => {
+        const name = document.getElementById("name")
+        const room = document.getElementById("room")
+        const color = document.getElementById("color")
+
+        // join the room
+        socket.emit("join", {name: name.value, room: room.value})
+
+        const displayMessage = ({message, name, color}, status) => {
             const nodeMessage = document.createElement("article")
             const nodeMessageInner = document.createElement("div")
 
@@ -218,7 +227,7 @@
 
             messageInfo.classList.add("message-info")
             
-            messageAuthor.innerText = "Dilane3"
+            messageAuthor.innerText = name
             messageDate.innerText = date.getHours() + ':' + date.getMinutes()
 
             // setting some classes
@@ -228,7 +237,6 @@
             if (status === "sended") {
                 nodeMessageInner.classList.add("sended") // set the sended class
                 messageInfo.classList.add("sended")
-                messageAuthor.style.color = "#3e4bff"
             }
 
             nodeMessageInner.innerText = message
@@ -236,9 +244,11 @@
             nodeMessage.appendChild(nodeMessageInner)
 
             // adding info message
-            if (status === "received")
+            if (status === "received") {
+                messageAuthor.style.color = color
                 messageInfo.appendChild(messageAuthor)
-                
+            }
+
             messageInfo.appendChild(messageDate)
             nodeMessage.appendChild(messageInfo)
 
@@ -257,11 +267,15 @@
             const message = textField.value
 
             if (message && message.length > 0) {
-              displayMessage(message, "sended")
+                const n = name.value
+                const c = color.value
+                const r = room.value
 
-              socket.emit("chat message", message)
+                displayMessage({message, name: n, color: c}, "sended")
 
-              textField.value = ""
+                socket.emit("chat message", {message, name: n, color: c, room: r})
+
+                textField.value = ""
             }
         }
 
@@ -271,8 +285,11 @@
                 sendMessage(event)
         }
 
-        socket.on("message", (message) => {
-          displayMessage(message, "received")
+        socket.on("message", ({message, name, color}) => {
+            const audio = new Audio("http://192.168.43.81:5000/sound/message.mp3")
+
+            audio.play()
+            displayMessage({message, name, color}, "received")
         })
     </script>
 </body>
