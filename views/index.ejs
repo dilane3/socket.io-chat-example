@@ -216,7 +216,10 @@
     <script>
         var socket = io();
 
-        const audio = new Audio("https://chat-room-server-app.herokuapp.com/sound/message.mp3")
+        const playAudio = async () => {
+            const audio = new Audio("https://chat-room-server-app.herokuapp.com/sound/message.mp3")
+            audio.play()
+        }
 
         // selection of elements
         const messages = document.querySelector(".section-message")
@@ -236,7 +239,7 @@
         }
 
         // join the room
-        socket.emit("join", {name: name.value, room: room.value, color: color.value}, (onlineUsers) => {
+        socket.emit("join", {name: name.value, room: room.value.toLowerCase(), color: color.value}, (onlineUsers) => {
             document.querySelector(".online-users-number").innerText = numberUsersOnline(onlineUsers)
         })
 
@@ -295,7 +298,7 @@
             if (message && message.length > 0) {
                 const n = name.value
                 const c = color.value
-                const r = room.value
+                const r = room.value.toLowerCase()
 
                 displayMessage({message, name: n, color: c}, "sended")
 
@@ -312,7 +315,8 @@
         }
 
         socket.on("message", ({message, name, color}) => {
-            audio.play()
+            playAudio()
+
             displayMessage({message, name, color}, "received")
         })
 
