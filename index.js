@@ -22,7 +22,9 @@ const {
   addUser,
   removeUser,
   getUser,
-  getUsersRoom
+  getUsersRoom,
+  getUsersTyping,
+  setUserTyping
 } = require("./users/users.js")
 
 app.set("view engine", "ejs")
@@ -59,11 +61,22 @@ io.on("connection", (socket) => {
     // trigger an event
     socket.broadcast.to(room).emit("online users", getUsersRoom(room))
 
+    // get all users typying
+    socket.broadcast.to(room).emit("users typing", getUsersTyping(room))
+
     cb(getUsersRoom(room))
   })
 
   socket.on("chat message", ({message, name, color, room}) => {
     socket.broadcast.to(room).emit("message", {message, name, color})
+  })
+
+  socket.on("user is typing", ({room, val}) => {
+    const users = setUserTyping(socket.id, val, room)
+
+    console.log(users)
+
+    socket.broadcast.to(room).emit("users typing", users)
   })
 
   socket.on("disconnect", (reason) => {

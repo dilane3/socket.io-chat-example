@@ -32,9 +32,36 @@ const getUser = (id) => {
 
 const getUsersRoom = (room) => users.filter(user => user.getRoom === room).length
 
+const getUsersTyping = (room) => {
+  console.log(room)
+  const usersRoom = users.filter(user => user.getRoom === room)
+
+  const usersTyping = usersRoom.filter(user => user.getIsTyping)
+
+  return usersTyping
+}
+
+const setUserTyping = (id, val, room) => {
+  const index = users.findIndex(user => user.getId === id)
+
+  if (index > -1) {
+    const user = users[index]
+
+    user.setIsTyping(val)
+
+    users[index] = user
+  }
+
+  console.log(getUsersTyping(room))
+
+  return getUsersTyping(room)
+}
+
 module.exports = {
   addUser,
   removeUser,
   getUser,
-  getUsersRoom
+  getUsersRoom,
+  getUsersTyping,
+  setUserTyping
 }

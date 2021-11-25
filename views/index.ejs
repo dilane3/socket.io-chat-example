@@ -39,6 +39,34 @@
             padding-left: 20px;
         }
 
+        .users-typying {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 20px;
+            max-width: 300px;
+            min-width: 40px;
+            width: auto;
+            /* background-color: rgb(223, 222, 222); */
+            background-color: #fff;
+            color: #3e4bff;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 10px;
+            z-index: 105;
+            box-shadow: 0 .5px 3px #aaa;
+            border-radius: 5px;
+            opacity: .8;
+            font-size: 12px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
         .online-users-number {
             margin-right: 10px;
         }
@@ -203,6 +231,8 @@
             <span class="online-users-number"></span>
         </header>
 
+        <div class="users-typying hidden"></div>
+
         <div class="section-message">
         </div>
 
@@ -225,6 +255,7 @@
         const messages = document.querySelector(".section-message")
         const textField = document.querySelector(".message")
         const sendBtn = document.querySelector(".btn-send")
+        const usersTyping = document.querySelector(".users-typying")
 
         const name = document.getElementById("name")
         const room = document.getElementById("room")
@@ -243,6 +274,16 @@
             document.querySelector(".online-users-number").innerText = numberUsersOnline(onlineUsers)
         })
 
+        const formatDate = (date) => {
+            const hours = date.getHours()
+            const minutes = date.getMinutes()
+
+            let hoursString = hours < 10 ? `0${hours}`:`${hours}`
+            let minutesString = minutes < 10 ? `0${minutes}`:`${minutes}`
+
+            return {hours: hoursString, minutes: minutesString}
+        }
+
         const displayMessage = ({message, name, color}, status) => {
             const nodeMessage = document.createElement("article")
             const nodeMessageInner = document.createElement("div")
@@ -252,12 +293,12 @@
             const messageAuthor = document.createElement("span")
             const messageDate = document.createElement("span")
 
-            const date = new Date()
+            const {hours, minutes} = formatDate(new Date())
 
             messageInfo.classList.add("message-info")
             
             messageAuthor.innerText = name
-            messageDate.innerText = date.getHours() + ':' + date.getMinutes()
+            messageDate.innerText = hours + ':' + minutes
 
             // setting some classes
             nodeMessage.classList.add("message")
@@ -303,6 +344,7 @@
                 displayMessage({message, name: n, color: c}, "sended")
 
                 socket.emit("chat message", {message, name: n, color: c, room: r})
+                socket.emit("user is typing", {room: room.value.toLowerCase(), val: false})
 
                 textField.value = ""
             }
@@ -314,14 +356,64 @@
                 sendMessage(event)
         }
 
+        // user is typying
+        textField.addEventListener("keyup", function(event){
+            // event.preventDefault()
+
+            const msg = textField.value
+
+            if (msg.length > 0) {
+                console.log(msg)
+                socket.emit("user is typing", {room: room.value.toLowerCase(), val: true})
+            } else {
+                socket.emit("user is typing", {room: room.value.toLowerCase(), val: false})
+            }
+        })
+
+        // receive a message
         socket.on("message", ({message, name, color}) => {
             playAudio()
 
             displayMessage({message, name, color}, "received")
         })
 
+        // get all users online
         socket.on("online users", (onlineUsers) => {
             document.querySelector(".online-users-number").innerText = numberUsersOnline(onlineUsers)
+        })
+
+        // get all users typying
+        socket.on("users typing", (users) => {
+            if (users.length > 0) {
+                const index = users.findIndex(user => user.id === socket.id)
+
+                if (index > -1)
+                    users.splice(index, 1)
+
+                const number = users.length
+
+                const names = users.map(user => user.name)
+                console.log(names)
+
+                const namesString = [...names].splice(0, 3).join(" ").toLowerCase()
+
+                if (number === 0) {
+                    usersTyping.classList.remove("hidden")
+                }
+                if (number === 1) {
+                    usersTyping.innerText = `${namesString} is typing`
+                }
+                else if (number > 1 && number <= 3) {
+                    usersTyping.innerText = `${namesString} are typing`
+                }
+                else {
+                    usersTyping.innerText = `${namesString} and ${[...names].splice(3).length} others are typing`
+                }
+            
+                usersTyping.classList.remove("hidden")    
+            } else {
+                usersTyping.classList.add("hidden")
+            }
         })
     </script>
 </body>

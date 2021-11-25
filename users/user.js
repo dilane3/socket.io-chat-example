@@ -4,6 +4,7 @@ class User {
     this.name = name
     this.room = room
     this.color = color
+    this.isTyping = false
   }
 
   // getters
@@ -21,6 +22,15 @@ class User {
 
   get getColor() {
     return this.color
+  }
+
+  get getIsTyping () {
+    return this.isTyping
+  }
+
+  // setters
+  setIsTyping(val) {
+    this.isTyping = val
   }
 }
 
