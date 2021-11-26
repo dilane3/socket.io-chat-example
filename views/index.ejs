@@ -27,6 +27,12 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, .4);
         }
 
+        div.message-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
         header {
             height: 40px;
             width: calc(100% - 20px);
@@ -71,13 +77,36 @@
             margin-right: 10px;
         }
 
-        .section-message {
+        .section-message,
+        .image-viewer {
             width: 100%;
             height: calc(100% - 100px);
+        }
+
+        .section-message {
             overflow-y: scroll;
             overflow-x: hidden;
             scrollbar-width: thin;
             scrollbar-color: green;
+        }
+
+        .image-viewer {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #aaa;
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        .image-viewer i {
+            font-size: 2rem;
+            color: black;
+            position: absolute;
+            top: 5px;
+            right: 5px;
         }
         
         article.message {
@@ -91,6 +120,7 @@
 
         .message-item {
             display: flex;
+            flex-direction: column;
             position: relative;
             max-width: 300px;
             min-width: 70px;
@@ -100,10 +130,28 @@
             background-color: #3b84f1;
             color:#fff;
             margin-left: 30px;
-            padding: 10px;
+            padding: 2px;
             border-radius: 10px 10px 10px 0;
             z-index: 5;
             font-size: 13px;
+        }
+
+        .message-item span {
+            padding: 10px;
+        }
+
+        .message-image {
+            width: calc(300px - 2px);
+            height: 300px;
+            border: 1px solid #eee;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .message-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .message-info {
@@ -184,7 +232,7 @@
         }
 
         .editor input {
-            width: calc(100% - 110px);
+            width: calc(100% - 160px);
             height: 30px;
             padding: 2px 10px;
             border-radius: 5px;
@@ -193,6 +241,18 @@
 
         .editor input:focus {
             outline: none;
+        }
+
+        .editor i {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #aaa;
+            font-size: 2rem;
+            margin-right: 10px;
         }
 
         @media screen and (max-width: 500px) {
@@ -217,34 +277,59 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.1/font/bootstrap-icons.min.css">
 </head>
 <body>
     <section id="messages">
         <input type="hidden" value=<%= name %> id="name">
         <input type="hidden" value=<%= room %> id="room">
         <input type="hidden" value=<%= color %> id="color">
-        <header>
-            <span>
-                <%= name %>
-            </span>
+        <input type="hidden" id="image-support" value="false">
+        <input type="file" accept="image/*" hidden>
 
-            <span class="online-users-number"></span>
-        </header>
-
-        <div class="users-typying hidden"></div>
-
-        <div class="section-message">
-        </div>
-
-        <div class="editor">
-            <input type="text" class="message" placeholder="Type a message">
-            <button class="btn-send">Send</button>
+        <div class="message-container">
+            <header>
+                <span>
+                    <%= name %>
+                </span>
+    
+                <span class="online-users-number"></span>
+            </header>
+    
+            <div class="users-typying hidden"></div>
+    
+            <div class="section-message">
+                <!-- <article class="message">
+                    <div class="message-item sended">
+                        <div class="message-image">
+                            <img src="http://localhost:5000/images/1637918029010--1.png">
+                        </div>
+                        <span>
+                            Hello les amis, je suis un gars de la rue et je ne veux pas manger
+                        </span>
+                    </div>
+                </article> -->
+            </div>
+            <div class="image-viewer hidden">
+                <i class="bi bi-x image-viewer-close"></i>
+            </div>
+    
+            <div class="editor">
+                <i class="bi bi-image icon-image"></i>
+                <input type="text" class="message" placeholder="Type a message">
+                <button class="btn-send">Send</button>
+            </div>
         </div>
     </section>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.24.0/axios.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io();
+
+        const instance = axios.create({
+            baseURL: "http://localhost:5000"
+        })
 
         const playAudio = async () => {
             const audio = new Audio("https://chat-room-server-app.herokuapp.com/sound/message.mp3")
@@ -253,13 +338,19 @@
 
         // selection of elements
         const messages = document.querySelector(".section-message")
-        const textField = document.querySelector(".message")
+        const textField = document.querySelector("input.message")
         const sendBtn = document.querySelector(".btn-send")
         const usersTyping = document.querySelector(".users-typying")
+        const imageField = document.querySelector("input[type=file]")
+        const iconImage = document.querySelector(".icon-image")
+        const imageViewer = document.querySelector(".image-viewer")
+        const iconImageViewerClose = document.querySelector(".image-viewer-close")
 
         const name = document.getElementById("name")
         const room = document.getElementById("room")
         const color = document.getElementById("color")
+        const imageSupport = document.getElementById("image-support")
+        let imageSupported = false
 
         // display number users online
         const numberUsersOnline = (number) => {
@@ -284,9 +375,10 @@
             return {hours: hoursString, minutes: minutesString}
         }
 
-        const displayMessage = ({message, name, color}, status) => {
+        const displayMessage = ({message, image, name, color}, status) => {
             const nodeMessage = document.createElement("article")
             const nodeMessageInner = document.createElement("div")
+            const nodeMessageInnerText = document.createElement("span")
 
             // message info
             const messageInfo = document.createElement("div")
@@ -309,8 +401,25 @@
                 messageInfo.classList.add("sended")
             }
 
-            nodeMessageInner.innerText = message
+            // adding image to a message
+            if (image) {
+                const nodeImage = document.createElement("img")
+                const nodeImageContainer = document.createElement("div")
 
+                nodeImageContainer.classList.add("message-image")
+                nodeImage.src = image
+
+                nodeImageContainer.appendChild(nodeImage)
+
+                nodeMessageInner.appendChild(nodeImageContainer)
+            }
+
+            // adding text
+            if (message) {
+                nodeMessageInnerText.innerText = message
+                nodeMessageInner.appendChild(nodeMessageInnerText)
+            }
+            
             nodeMessage.appendChild(nodeMessageInner)
 
             // adding info message
@@ -336,21 +445,81 @@
 
             const message = textField.value
 
+            const n = name.value
+            const c = color.value
+            const r = room.value.toLowerCase()
+
             if (message && message.length > 0) {
-                const n = name.value
-                const c = color.value
-                const r = room.value.toLowerCase()
+                console.log(imageSupported)
 
-                displayMessage({message, name: n, color: c}, "sended")
+                if (imageSupported) {
+                    const formData = new FormData()
 
-                socket.emit("chat message", {message, name: n, color: c, room: r})
+                    formData.append("image", imageField.files[0])
+
+                    instance.post("/api/message", formData)
+                    .then(res => {
+                        const imageUrl = "http://localhost:5000/images/" + res.data.filename
+
+                        displayMessage({message, image: imageUrl, name: n, color: c}, "sended")
+                        socket.emit("chat message", {message, image: imageUrl, name: n, color: c, room: r})
+                    })
+                    .catch(err => {
+                        console.log(err)
+                    })
+                    .then(() => {
+                        imageSupport.value = false
+                    })
+                } else {
+                    displayMessage({message, name: n, color: c}, "sended")
+                    socket.emit("chat message", {message, name: n, color: c, room: r})
+                }
+
                 socket.emit("user is typing", {room: room.value.toLowerCase(), val: false})
 
                 textField.value = ""
+            } 
+            else {
+                if (imageField.files.length > 0) {
+                    const formData = new FormData()
+
+                    formData.append("image", imageField.files[0])
+
+                    instance.post("/api/message", formData)
+                    .then(res => {
+                        const imageUrl = "http://localhost:5000/images/" + res.data.filename
+
+                        displayMessage({image: imageUrl, name: n, color: c}, "sended")
+                        socket.emit("chat message", {image: imageUrl, name: n, color: c, room: r})
+                    })
+                    .catch(err => {
+                        console.log(err)
+                    })
+                    .then(() => {
+                        imageSupport.value = false
+                    })
+                }
             }
         }
 
+        iconImageViewerClose.onclick = () => {
+            imageViewer.classList.add('hidden')
+
+            imageSupported = false
+        }
+
+        imageField.onchange = function() {
+            imageViewer.classList.remove('hidden')
+
+            imageSupported = true
+        }
+
+        iconImage.onclick = function(event) {
+            imageField.click()
+        }
+
         sendBtn.onclick = sendMessage
+
         textField.onkeyup = (event) => {
             if (event.key === "Enter")
                 sendMessage(event)
@@ -371,10 +540,10 @@
         })
 
         // receive a message
-        socket.on("message", ({message, name, color}) => {
+        socket.on("message", ({message, image, name, color}) => {
             playAudio()
 
-            displayMessage({message, name, color}, "received")
+            displayMessage({message, image, name, color}, "received")
         })
 
         // get all users online

@@ -4,6 +4,7 @@ const http = require("http")
 const server = http.createServer(app)
 const {Server} = require("socket.io")
 const io = new Server(server)
+const {upload} = require("./utils/uploadImage")
 
 const PORT = process.env.PORT || 5000
 
@@ -33,6 +34,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 
 app.use("/sound", express.static("public"))
+app.use("/images", express.static("public/images"))
 
 app.get("/", (req, res) => {
   const {name, room} = req.query
@@ -47,6 +49,16 @@ app.get("/", (req, res) => {
 
 app.get("/login", (req, res) => {
   res.render("login")
+})
+
+app.post("/api/message", upload, (req, res) => {
+  const {file} = req
+
+  if (file) {
+    return res.status(201).json(file)
+  }
+
+  return res.sendStatus(500)
 })
 
 io.on("connection", (socket) => {
@@ -67,8 +79,8 @@ io.on("connection", (socket) => {
     cb(getUsersRoom(room))
   })
 
-  socket.on("chat message", ({message, name, color, room}) => {
-    socket.broadcast.to(room).emit("message", {message, name, color})
+  socket.on("chat message", ({message, image, name, color, room}) => {
+    socket.broadcast.to(room).emit("message", {message, image, name, color})
   })
 
   socket.on("user is typing", ({room, val}) => {
