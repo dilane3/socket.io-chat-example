@@ -374,7 +374,7 @@
         var socket = io();
 
         const instance = axios.create({
-            baseURL: "http://192.168.43.81:5000"
+            baseURL: "http://chat-room-server-app.herokuapp.com"
         })
 
         const playAudio = async () => {
@@ -510,7 +510,7 @@
 
                     instance.post("/api/message", formData)
                     .then(res => {
-                        const imageUrl = "http://192.168.43.81:5000/images/" + res.data.filename
+                        const imageUrl = "http://chat-room-server-app.herokuapp.com/images/" + res.data.filename
 
                         displayMessage({message, image: imageUrl, name: n, color: c}, "sended")
                         socket.emit("chat message", {message, image: imageUrl, name: n, color: c, room: r})
@@ -539,7 +539,7 @@
 
                     instance.post("/api/message", formData)
                     .then(res => {
-                        const imageUrl = "http://192.168.43.81:5000/images/" + res.data.filename
+                        const imageUrl = "http://chat-room-server-app.herokuapp.com/images/" + res.data.filename
 
                         displayMessage({image: imageUrl, name: n, color: c}, "sended")
                         socket.emit("chat message", {image: imageUrl, name: n, color: c, room: r})
