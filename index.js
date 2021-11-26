@@ -5,6 +5,7 @@ const server = http.createServer(app)
 const {Server} = require("socket.io")
 const io = new Server(server)
 const {upload} = require("./utils/uploadImage")
+const cors = require('cors')
 
 const PORT = process.env.PORT || 5000
 
@@ -28,8 +29,14 @@ const {
   setUserTyping
 } = require("./users/users.js")
 
+const corsOptions = {
+  origin: "*",
+  Credential: true
+}
+
 app.set("view engine", "ejs")
 
+app.use(cors(corsOptions))
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 

@@ -96,9 +96,18 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #aaa;
+            background-color: #eee;
             overflow: hidden;
             z-index: 100;
+            display: none;
+            flex-direction: row;
+            justify-content: center;
+        }
+
+        .image-viewer img {
+            width: 300px;
+            height: 100%;
+            object-fit: cover;
         }
 
         .image-viewer i {
@@ -107,6 +116,13 @@
             position: absolute;
             top: 5px;
             right: 5px;
+            background-color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         article.message {
@@ -143,7 +159,7 @@
         .message-image {
             width: calc(300px - 2px);
             height: 300px;
-            border: 1px solid #eee;
+            /* border: 1px solid #eee; */
             border-radius: 7px;
             overflow: hidden;
         }
@@ -268,6 +284,35 @@
                 left: 0;
                 right: 0;
             }
+
+            .message-image {
+                width: calc(300px - 2px);
+                height: 300px;
+                border: 1px solid #eee;
+                border-radius: 7px;
+                overflow: hidden;
+            }
+            
+        }
+
+        @media screen and (max-width: 400px) {
+            .image-viewer img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .message-item {
+                max-width: 80%;
+            }
+
+            .message-image {
+                width: calc(100% - 2px);
+                height: 300px;
+                border: 1px solid #eee;
+                border-radius: 7px;
+                overflow: hidden;
+            }
         }
 
         @media screen and (max-height: 500px) {
@@ -312,6 +357,7 @@
             </div>
             <div class="image-viewer hidden">
                 <i class="bi bi-x image-viewer-close"></i>
+                <img src="" class="image-preview">
             </div>
     
             <div class="editor">
@@ -328,7 +374,7 @@
         var socket = io();
 
         const instance = axios.create({
-            baseURL: "http://localhost:5000"
+            baseURL: "http://192.168.43.81:5000"
         })
 
         const playAudio = async () => {
@@ -345,12 +391,12 @@
         const iconImage = document.querySelector(".icon-image")
         const imageViewer = document.querySelector(".image-viewer")
         const iconImageViewerClose = document.querySelector(".image-viewer-close")
+        const imagePreviewer = document.querySelector(".image-preview")
 
         const name = document.getElementById("name")
         const room = document.getElementById("room")
         const color = document.getElementById("color")
         const imageSupport = document.getElementById("image-support")
-        let imageSupported = false
 
         // display number users online
         const numberUsersOnline = (number) => {
@@ -364,6 +410,12 @@
         socket.emit("join", {name: name.value, room: room.value.toLowerCase(), color: color.value}, (onlineUsers) => {
             document.querySelector(".online-users-number").innerText = numberUsersOnline(onlineUsers)
         })
+
+        const handleImagePreview = (file) => {
+            if (file) {
+                imagePreviewer.src = URL.createObjectURL(file)
+            }
+        }
 
         const formatDate = (date) => {
             const hours = date.getHours()
@@ -450,16 +502,15 @@
             const r = room.value.toLowerCase()
 
             if (message && message.length > 0) {
-                console.log(imageSupported)
 
-                if (imageSupported) {
+                if (imageField.files.length > 0) {
                     const formData = new FormData()
 
                     formData.append("image", imageField.files[0])
 
                     instance.post("/api/message", formData)
                     .then(res => {
-                        const imageUrl = "http://localhost:5000/images/" + res.data.filename
+                        const imageUrl = "http://192.168.43.81:5000/images/" + res.data.filename
 
                         displayMessage({message, image: imageUrl, name: n, color: c}, "sended")
                         socket.emit("chat message", {message, image: imageUrl, name: n, color: c, room: r})
@@ -468,7 +519,8 @@
                         console.log(err)
                     })
                     .then(() => {
-                        imageSupport.value = false
+                        imageViewer.style.display = 'none'
+                        imageField.value = ""
                     })
                 } else {
                     displayMessage({message, name: n, color: c}, "sended")
@@ -487,7 +539,7 @@
 
                     instance.post("/api/message", formData)
                     .then(res => {
-                        const imageUrl = "http://localhost:5000/images/" + res.data.filename
+                        const imageUrl = "http://192.168.43.81:5000/images/" + res.data.filename
 
                         displayMessage({image: imageUrl, name: n, color: c}, "sended")
                         socket.emit("chat message", {image: imageUrl, name: n, color: c, room: r})
@@ -496,22 +548,24 @@
                         console.log(err)
                     })
                     .then(() => {
-                        imageSupport.value = false
+                        imageViewer.style.display = 'none'
+                        imageField.value = ""
                     })
                 }
             }
         }
 
         iconImageViewerClose.onclick = () => {
-            imageViewer.classList.add('hidden')
+            imageViewer.style.display = 'none'
 
-            imageSupported = false
+            imageField.value = ""
+            console.log("donne")
         }
 
         imageField.onchange = function() {
-            imageViewer.classList.remove('hidden')
+            imageViewer.style.display = 'flex'
 
-            imageSupported = true
+            handleImagePreview(this.files[0])
         }
 
         iconImage.onclick = function(event) {
